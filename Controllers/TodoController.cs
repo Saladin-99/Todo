@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Todo.Models;
+using Todo.Services;
 
 [ApiController]
 [Route("api/[controller]")]
 public class TodoController : ControllerBase
 {
-    private readonly TodoContext _context;
+    private readonly ITodoService _todoService;
 
-    public TodoController(TodoContext context)
+    public TodoController(ITodoService todoService)
     {
-        _context = context;
+        _todoService = todoService;
     }
 
     [HttpPost]
@@ -20,10 +21,15 @@ public class TodoController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        _context.TodoItems.Add(todoItem);
-        await _context.SaveChangesAsync();
+        var createdTodoItem = await _todoService.CreateTodoItem(todoItem);
+        return CreatedAtAction(nameof(CreateTodoItem), new { id = createdTodoItem.Id }, createdTodoItem);
+    }
 
-        return CreatedAtAction(nameof(CreateTodoItem), new { id = todoItem.Id }, todoItem);
+    [HttpGet]
+    public async Task<IActionResult> GetAllTodoItems()
+    {
+        var todoItems = await _todoService.GetAllTodoItems();
+        return Ok(todoItems);
     }
 
     // Additional methods for other CRUD operations could be added here
